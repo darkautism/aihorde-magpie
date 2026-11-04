@@ -10,7 +10,7 @@ If you installed the previous v0.1.0 tools version, **remove it** from **Plugins
 magpie plugin add github:darkautism/aihorde-magpie
 ```
 
-Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.2.0) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
+Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.2.1) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
 
 In Magpie's **Providers / External** area, find **AI Horde (image generation)** and sign in:
 - **Use anonymously (free / low priority)** — one click, no API key.
@@ -32,7 +32,9 @@ Magpie sends the plugin an OpenAI-style POST to `images/generations`, and the pl
 3. Retrieves `generate/status/{id}` after completion.
 4. Returns `{"created": ..., "data": [{"url": "https://..."}]}` to Magpie.
 
-The default model allows AI Horde to choose a compatible worker. A live list of up to 30 online worker models also appears in the image picker. Those models' opaque IDs start with `stable-diffusion-horde-` so Magpie classifies them as image models; their human-readable labels show the real Horde model names.
+The default model allows AI Horde to choose a compatible worker. The image picker now lists **Automatic** plus up to **12 online models**. Anime-related checkpoints (e.g. Pony, Illustrious, Animagine) are shown first when available; other checkpoints fill remaining slots by online worker count. Unlike v0.2.0, model IDs are now readable: `stable-diffusion-horde--Pony-Diffusion-XL`, not Base64. These IDs are reversible, preserving exact AI Horde checkpoint names. Magpie requires `stable-diffusion` in the ID to classify them as image generators, so this prefix cannot be removed. The displayed worker counts are a snapshot and may change at generation time.
+
+**Upgrading from v0.2.0:** previously selected Base64 model IDs are still accepted for image generation, but new model listings use the readable IDs. Remove and reinstall the plugin if Magpie retains the old cached list; then reselect the desired image model.
 
 **Important limitation:** A normal image Provider request is synchronous, while AI Horde is a queue. This plugin waits up to **115 seconds**, after which it returns an error containing the queued job ID. Magpie or a calling agent can also time out earlier; the operation is not guaranteed to complete. Anonymous free queues can be slow, so choosing a model with more active workers or using a personal API key may help. This plugin does not provide polling tools or image edits.
 
