@@ -1,7 +1,7 @@
 {
   "name": "magpie-ai-horde-provider",
-  "version": "0.3.4",
-  "description": "AI Horde Magpie Provider: full model registry, clean display names, stable image IDs and img2img",
+  "version": "0.3.5",
+  "description": "AI Horde image Provider with full model registry, stable IDs, clean labels and resilient discovery",
   "type": "module",
   "main": "./index.mjs",
   "files": [
