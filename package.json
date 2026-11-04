@@ -1,7 +1,7 @@
 {
   "name": "magpie-ai-horde-provider",
-  "version": "0.3.1",
-  "description": "AI Horde Provider with 576x576 anonymous defaults, text-to-image and image editing",
+  "version": "0.3.2",
+  "description": "AI Horde image Provider with caller-controlled sizes, text-to-image and image editing",
   "type": "module",
   "main": "./index.mjs",
   "files": [
