@@ -1,7 +1,7 @@
 {
   "name": "magpie-ai-horde-provider",
-  "version": "0.2.0",
-  "description": "AI Horde anonymous and API-key image generation provider for Magpie",
+  "version": "0.2.1",
+  "description": "AI Horde free image provider for Magpie with readable checkpoint names",
   "type": "module",
   "main": "./index.mjs",
   "files": [
