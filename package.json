@@ -1,30 +1,29 @@
 {
-  "name": "magpie-tools-ai-horde",
-  "version": "0.1.0",
-  "description": "AI Horde image generation tools for Magpie agents: submit, poll, preview and cancel jobs",
+  "name": "magpie-ai-horde-provider",
+  "version": "0.2.0",
+  "description": "AI Horde anonymous and API-key image generation provider for Magpie",
   "type": "module",
   "main": "./index.mjs",
   "files": [
     "index.mjs",
-    "lib",
+    "lib/provider.mjs",
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "test": "node --test tests/*.test.mjs",
-    "check": "node --check index.mjs && node --check lib/horde.mjs && npm test"
-  },
   "engines": {
     "node": ">=20"
   },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check index.mjs && node --check lib/provider.mjs && npm test"
+  },
   "keywords": [
     "magpie",
-    "magpie-tools",
+    "opencode",
     "opencode-plugin",
-    "mcp",
+    "provider",
     "ai-horde",
-    "image-generation",
-    "nsfw"
+    "image-generation"
   ],
   "license": "MIT",
   "repository": {
@@ -32,13 +31,11 @@
     "url": "git+https://github.com/darkautism/aihorde-magpie.git"
   },
   "magpie": {
-    "name": "AI Horde Image Tools",
+    "name": "AI Horde Image Provider",
     "summary": {
-      "en": "Generate images with community GPUs via AI Horde, with asynchronous status tracking and optional adult-content routing.",
-      "zh": "透過 AI Horde 社群 GPU 生圖，支援非同步進度查詢及成人內容工作節點。"
+      "en": "Free community GPU image-generation provider. Magpie image picker integration.",
+      "zh": "免費社群 GPU 生圖 Provider，可在 Magpie 圖片生成設定中選用。"
     },
-    "options": {
-      "nsfwDefault": true
-    }
+    "maxConcurrency": 1
   }
 }
