@@ -50,7 +50,8 @@ test("active models are all listed with clean names, no 12-model cap", () => {
   assert.deepEqual(Object.keys(models).slice(0,3), [DEFAULT_MODEL, encodeModelName("Pony Diffusion XL"), encodeModelName("Model 0")])
   assert.equal(models[encodeModelName("Pony Diffusion XL")].name, "Pony Diffusion XL")
   assert.equal(models[encodeModelName("Model 0")].name, "Model 0")
-  assert.deepEqual(Object.keys(modelsFromWorkers(null)), [DEFAULT_MODEL])
+  assert.ok(modelsFromWorkers(null)[encodeModelName("HolyMix ILXL")])
+  assert.match(modelsFromWorkers(null)[encodeModelName("HolyMix ILXL")].name, /availability unknown/)
 })
 test("HolyMix ILXL and every registered offline model remain discoverable", () => {
   const online = [{ name: "Nova Flat XL", count: 2 }]
@@ -194,5 +195,7 @@ test("queue waits only for a configured deadline", async () => {
 test("model discovery handles upstream failures", async () => {
   const { fetchImpl } = fake({ "GET /api/v2/status/models": ok({ error: "offline" }, 500) })
   const models = await listWorkerModels({ fetchImpl })
-  assert.deepEqual(Object.keys(models), [DEFAULT_MODEL])
+  assert.ok(Object.keys(models).length > 100)
+  assert.ok(models[encodeModelName("HolyMix ILXL")])
+  assert.match(models[encodeModelName("HolyMix ILXL")].name, /availability unknown/)
 })
