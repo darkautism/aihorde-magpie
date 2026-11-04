@@ -36,12 +36,26 @@ test("model IDs round-trip and match Magpie images-API keyword", () => {
   assert.equal(decodeModelName(encoded), model)
   assert.equal(decodeModelName(DEFAULT_MODEL), null)
   assert.throws(() => decodeModelName("../broken"))
+  assert.equal(encoded, "stable-diffusion-horde--Pony-Diffusion-XL-%F0%9F%90%B4")
+  assert.equal(decodeModelName("stable-diffusion-horde-UG9ueSBEaWZmdXNpb24gWEw"), "Pony Diffusion XL")
+  assert.equal(decodeModelName(encodeModelName("SDXL: Pony/Illustrious-v1.0_test")), "SDXL: Pony/Illustrious-v1.0_test")
+  assert.equal(decodeModelName(encodeModelName("Foo-Bar")), "Foo-Bar")
+  assert.notEqual(encodeModelName("Foo Bar"), encodeModelName("Foo-Bar"))
+  assert.throws(() => decodeModelName("stable-diffusion-horde--invalid%ZZ"), /Malformed/)
 })
 test("active models are listed with real worker names plus fallback", () => {
   const items = modelsFromWorkers([{ name: "A", count: 4 }, { name: "B", count: 0 }, { name: "C", count: 1 }])
   assert.deepEqual(Object.keys(items), [DEFAULT_MODEL, encodeModelName("A"), encodeModelName("C")])
   assert.match(items[encodeModelName("A")].name, /4 workers/)
   assert.deepEqual(Object.keys(modelsFromWorkers(null)), [DEFAULT_MODEL])
+})
+test("anime checkpoints are featured, limited, and sorted by online worker count", () => {
+  const workers = Array.from({ length: 15 }, (_, i) => ({ name: "Generic Model " + i, count: 30 - i }))
+  workers.push({ name: "Pony Diffusion XL", count: 2 }, { name: "Illustrious XL", count: 1 })
+  const models = modelsFromWorkers(workers)
+  assert.equal(Object.keys(models).length, 13) // Automatic plus 12 named models
+  assert.deepEqual(Object.keys(models).slice(1, 3), [encodeModelName("Pony Diffusion XL"), encodeModelName("Illustrious XL")])
+  assert.match(models[encodeModelName("Pony Diffusion XL")].name, /2 workers/)
 })
 test("provider fetch translates NSFW requests and returns OpenAI image URL", async () => {
   const { fetchImpl, calls } = fake({
