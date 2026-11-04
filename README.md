@@ -1,69 +1,52 @@
-# AI Horde Image Tools for Magpie
+# AI Horde image provider for Magpie
 
-Use AI Horde's volunteer GPUs to generate images from any agent connected through [Magpie](https://usemagpie.ai/). This is a **native Magpie tool plugin**: **no Python, Docker, standalone proxy or npm publishing required**.
+Native **Provider** integration for Magpie. The image models appear in **Providers** and **Settings → Images → Image generation**, not in Tool plugins. An OpenAI-compatible `/v1/images/generations` request is translated into AI Horde's async image-generation queue, and the plugin returns the resulting picture URL to Magpie. No Python bridge, separate server, Docker or external dependency is needed.
 
-AI Horde accepts optional NSFW generation requests. Their safety rules still apply, and adult-capable volunteers may be fewer and slower. Do not send private prompts or photos to untrusted volunteer workers.
+## Install or upgrade
 
-## Install from GitHub
+If you installed the previous v0.1.0 tools version, **remove it** from **Plugins → Installed**, then install the updated repository:
 
 ```bash
 magpie plugin add github:darkautism/aihorde-magpie
-magpie plugin
 ```
 
-Or open **Magpie → Settings → Plugins → Add plugin** and paste:
+Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.2.0) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
 
-`github:darkautism/aihorde-magpie`
+In Magpie's **Providers / External** area, find **AI Horde (image generation)** and sign in:
+- **Use anonymously (free / low priority)** — one click, no API key.
+- **AI Horde personal API key** — paste your key to improve queue priority.
 
-Magpie uses Bun to load the repository's root `package.json` and `index.mjs`. There is no build step and no runtime dependency. Tool IDs end in `generate_image`, `image_status`, `list_models`, and `cancel_image`; Magpie prepends a plugin-specific name. In **Plugins → Installed** you can see the exact names.
+Then open **Settings → Images → Image generation**, select the `aihorde` image model **AI Horde · Automatic (image)** or a named active image model. Example model ID: `aihorde/stable-diffusion-horde`. The plugin uses Magpie's existing built-in image generation UI and gateway; it does not add a new chat LLM.
 
-To expose tools to a connected coding agent, enable Magpie's **Library → MCP → AI Horde Image Tools** (or the built-in Plugin tools MCP server) for that agent and ensure its MCP router is active. Magpie documents this at [Writing plugins → Tools for every agent](https://usemagpie.ai/docs/plugins#tools-for-every-agent).
-
-## Quick start
-
-Ask an MCP-enabled agent:
-
-> Use AI Horde to generate a 512x512 anime-style illustration of a moonlit shrine. If it is still in the queue, keep the job ID and check its status rather than generating again. Show me the image link when ready.
-
-The `generate_image` tool can wait up to 35 seconds. When AI Horde takes longer (common on the free anonymous queue), it returns a `job_id`; ask the agent to call `image_status` with the same ID later. Magpie tools have an overall 55-second timeout, so the plugin **does not block until the entire queue finishes**.
-
-Image results contain HTTPS links plus Markdown `![...](...)` preview text. **Whether the picture is displayed inline is up to the chat/agent client**; all clients can at least access its URL. Generated links may expire: download the image when available.
-
-## API key (optional)
-
-By default, the plugin uses the official AI Horde anonymous key `0000000000`. No sign-up is necessary, but anonymous queue priority is low. For a personal key, set the `AI_HORDE_API_KEY` environment variable **in the environment that launches the Magpie app or gateway**:
+To test through Magpie CLI (if your version supports it):
 
 ```bash
-export AI_HORDE_API_KEY='your-ai-horde-key'
-magpie # launch Magpie from this shell if you want it to inherit the key
+magpie tool generate_image "an anime castle at night" --model aihorde/stable-diffusion-horde --size 512x512 -o image.png
 ```
 
-Alternatively configure the plugin through `magpie plugin options` (stored **in plaintext** in Magpie's `plugins.json`; do not use this on shared computers):
+## How this works
 
-```bash
-magpie plugin options magpie-tools-ai-horde '{"apiKey":"your-ai-horde-key","nsfwDefault":true}'
-```
+Magpie sends the plugin an OpenAI-style POST to `images/generations`, and the plugin:
+1. Submits `POST https://aihorde.net/api/v2/generate/async`.
+2. Polls `generate/check/{id}` every ~3 seconds.
+3. Retrieves `generate/status/{id}` after completion.
+4. Returns `{"created": ..., "data": [{"url": "https://..."}]}` to Magpie.
 
-Set `nsfwDefault` to `false` if you want NSFW routing disabled by default. Every individual generation can explicitly specify `nsfw: true` or `false`.
+The default model allows AI Horde to choose a compatible worker. A live list of up to 30 online worker models also appears in the image picker. Those models' opaque IDs start with `stable-diffusion-horde-` so Magpie classifies them as image models; their human-readable labels show the real Horde model names.
 
-## Tools
+**Important limitation:** A normal image Provider request is synchronous, while AI Horde is a queue. This plugin waits up to **115 seconds**, after which it returns an error containing the queued job ID. Magpie or a calling agent can also time out earlier; the operation is not guaranteed to complete. Anonymous free queues can be slow, so choosing a model with more active workers or using a personal API key may help. This plugin does not provide polling tools or image edits.
 
-| Tool | Purpose |
-|---|---|
-| `generate_image` | Submit a new text-to-image job, optionally wait for completion; negative prompt, model, size, seed, steps, count, NSFW. |
-| `image_status` | Check a job, optionally wait up to 35 seconds, retrieve image URLs when complete. |
-| `list_models` | Show active image models and number of online workers. |
-| `cancel_image` | Cancel a pending generation. |
+## NSFW setting
 
-The model names and available resolutions depend on volunteer workers. Omit `model` to let AI Horde select one, or use `list_models` to see the live names. Settings beyond what a worker accepts can be rejected by AI Horde.
+The provider option **Enable NSFW generation** is enabled by default. It sets `nsfw: true` in the Horde API request, which enables volunteer workers that allow adult content. Turn it off from the provider's **Plugin options** to set `nsfw: false`. All AI Horde global safety restrictions and worker policies still apply.
 
-### Privacy and safeguards
+## Privacy and limits
 
-- Every prompt is sent to AI Horde, then to volunteer GPU workers. Do not send private photos, identifying text or secrets.
-- Adult-content routing (`nsfw=true`) is not a safety bypass. AI Horde's global restrictions and each worker's rules still apply.
-- For anonymous accounts, AI Horde may share images for dataset improvement even when `shared: false` is requested. Use a personal key if that matters to you, and review AI Horde's privacy terms.
-- Prompts can consume credits/Kudos and have unpredictable queue times. Avoid duplicate submissions; always check the original `job_id`.
-- Only HTTPS URLs are returned for generated images; no automatically downloaded files are written to disk.
+- Prompts and image jobs are processed by AI Horde's **volunteer workers**, so do not submit secrets, private photos or sensitive content.
+- AI Horde decides which workers accept each prompt. `nsfw: true` is an opt-in routing hint, not a moderation bypass.
+- The plugin requests `r2: true` and `shared: false`; anonymous requests may still have different sharing/privacy rules under AI Horde's own policies.
+- It returns temporary HTTPS image URLs. Download or save generated images promptly.
+- There is no guaranteed processing time, uptime, or free quota. Anonymous use has low priority.
 
 ## Development
 
@@ -71,12 +54,10 @@ The model names and available resolutions depend on volunteer workers. Omit `mod
 npm test
 ```
 
-Tests use mocked API responses, and do not submit an actual image request or spend Kudos. This release has **not** been validated end-to-end against a live Magpie installation or a real AI Horde GPU. Report compatibility issues with the Magpie version, error message and (redacted) tool output.
+Unit tests use mocked AI Horde responses only. The plugin has **not** been end-to-end tested with a live Magpie installation or real AI Horde workers. Please report failures with your Magpie version and redacted logs.
 
-## References
+Magpie API docs: https://usemagpie.ai/docs/plugins  
+Magpie provider image integration: https://github.com/yetone/magpie/blob/main/docs/subsystems/provider-plugins.md  
+AI Horde API docs: https://aihorde.net/api/
 
-- [Magpie plugin authoring guide](https://usemagpie.ai/docs/plugins)
-- [AI Horde API](https://aihorde.net/api/)
-- [AI Horde integration guide](https://github.com/Haidra-Org/AI-Horde/blob/main/README_integration.md)
-
-MIT licensed. This is an unofficial community integration and not affiliated with AI Horde or Magpie.
+MIT licensed. Unofficial community integration.
