@@ -10,13 +10,13 @@ If you installed the previous v0.1.0 tools version, **remove it** from **Plugins
 magpie plugin add github:darkautism/aihorde-magpie
 ```
 
-Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.3.3) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
+Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.3.4) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
 
 In Magpie's **Providers / External** area, find **AI Horde (image generation)** and sign in:
 - **Use anonymously (free / low priority)** — one click, no API key.
 - **AI Horde personal API key** — paste your key to improve queue priority.
 
-Then open **Settings → Images → Image generation**, select the `aihorde` image model **AI Horde · Automatic (image)** or a named active image model. Example model ID: `aihorde/stable-diffusion-horde`. The plugin uses Magpie's existing built-in image generation UI and gateway; it does not add a new chat LLM.
+Then open **Settings → Images → Image generation**, select the `aihorde` image model **Automatic** or a named active image model. Example model ID: `aihorde/stable-diffusion-horde`. The plugin uses Magpie's existing built-in image generation UI and gateway; it does not add a new chat LLM.
 
 To test through Magpie CLI (if your version supports it):
 
@@ -32,7 +32,9 @@ Magpie sends the plugin an OpenAI-style POST to `images/generations`, and the pl
 3. Retrieves `generate/status/{id}` after completion.
 4. Returns `{"created": ..., "data": [{"url": "https://..."}]}` to Magpie.
 
-The default model allows AI Horde to choose a compatible worker. The image picker now lists **Automatic** plus up to **12 online models**. Anime-related checkpoints (e.g. Pony, Illustrious, Animagine) are shown first when available; other checkpoints fill remaining slots by online worker count. Unlike v0.2.0, model IDs are now readable: `stable-diffusion-horde--Pony-Diffusion-XL`, not Base64. These IDs are reversible, preserving exact AI Horde checkpoint names. Magpie requires `stable-diffusion` in the ID to classify them as image generators, so this prefix cannot be removed. The displayed worker counts are a snapshot and may change at generation time.
+The default model lets AI Horde choose a compatible worker. The image picker now includes **all models with online workers** (no artificial 12-model cap) and the **official 163-name registered model catalog**, including **HolyMix ILXL**. Models with no active workers are clearly labeled `(offline · 0 workers)` and cannot generate images until a worker becomes available. The catalog is a snapshot of the official Haidra-Org image-model reference; online counts are refreshed from Horde at plugin model discovery time.
+
+**Stable IDs, clean labels:** The plugin preserves the `stable-diffusion-horde--` technical prefix in model IDs for Magpie image routing, but puts the actual checkpoint name in the separate `name` display field, e.g. `HolyMix ILXL` rather than the encoded ID. Previous `--stable-diffusion` suffix IDs (v0.3.3) and original Base64 IDs (v0.2.0) are still accepted. Interfaces that deliberately show raw IDs instead of model names may still show the prefix; a Provider plugin cannot change that upstream UI.
 
 **Upgrading from v0.2.0:** previously selected Base64 model IDs are still accepted for image generation, but new model listings use the readable IDs. Remove and reinstall the plugin if Magpie retains the old cached list; then reselect the desired image model.
 
@@ -53,15 +55,12 @@ The native image Provider now supports `POST /v1/images/edits` in addition to `/
 Example: POST to Magpie's `/v1/images/edits` with `model=aihorde/stable-diffusion-horde`, `prompt`, and a multipart image file.
 Source images go to volunteer AI Horde workers; never submit sensitive personal photos.
 
-## Model ID display (v0.3.3)
+## Model ID and display name (v0.3.4)
 
-Named checkpoints now start with their own name instead of the repeated `stable-diffusion-horde--` prefix:
+Model IDs remain technical and stable, for example `stable-diffusion-horde--HolyMix-ILXL`.
+The Provider supplies a separate `name` field, for example `HolyMix ILXL` (or `HolyMix ILXL (offline · 0 workers)` when unavailable). Magpie's normal model-name UI reads `name`; the `stable-diffusion` ID marker is needed by Magpie's image routing.
 
-- Old: `stable-diffusion-horde--Nova-Flat-XL`
-- New: `Nova-Flat-XL--stable-diffusion`
-
-The `--stable-diffusion` ending is required because Magpie's image gateway detects images API models by ID. The prefix is no longer repeated in front of each checkpoint. Both previous readable and v0.2.0 Base64 IDs remain accepted by the adapter, but newly discovered models use the new ID format. Explicit model IDs in existing client configurations may need to be selected again if Magpie prunes models no longer listed.
-
+Offline catalog models are listed for discovery, not a promise that AI Horde can run them. Only worker availability determines whether an image request can be executed.
 ## Default image size (v0.3.2)
 
 - **All accounts, including anonymous:** when no size or `auto` is specified, defaults to **576×576**.
