@@ -88,6 +88,32 @@ test("automatic default leaves model selection to AI Horde", async () => {
   const sent = JSON.parse(calls[0].init.body)
   assert.equal(sent.models, undefined)
   assert.equal(sent.nsfw, false)
+  assert.deepEqual([sent.params.width, sent.params.height], [576, 576])
+})
+test("anonymous image generations override even an explicit larger Magpie size to 576x576", async () => {
+  const { fetchImpl, calls } = fake({
+    "POST /api/v2/generate/async": ok({ id: ID }),
+    ["GET /api/v2/generate/check/" + ID]: ok({ done: true }),
+    ["GET /api/v2/generate/status/" + ID]: ok({ generations: [{ img: IMAGE }] }),
+  })
+  const res = await providerFetch(`${API_ROOT}/images/generations`, {
+    method: "POST", body: JSON.stringify({ prompt: "portrait", size: "1024x1024" }),
+  }, { fetchImpl, key: "0000000000" })
+  assert.equal(res.status, 200)
+  assert.deepEqual(JSON.parse(calls[0].init.body).params, {width:576, height:576, n:1, steps:25})
+})
+test("personal API key keeps explicit resolution and defaults to 576x576", async () => {
+  const { fetchImpl, calls } = fake({
+    "POST /api/v2/generate/async": ok({ id: ID }),
+    ["GET /api/v2/generate/check/" + ID]: ok({ done: true }),
+    ["GET /api/v2/generate/status/" + ID]: ok({ generations: [{ img: IMAGE }] }),
+  })
+  const res = await providerFetch(`${API_ROOT}/images/generations`, {
+    method: "POST", body: JSON.stringify({ prompt: "portrait" }),
+  }, { fetchImpl, key: "user-personal-key" })
+  assert.equal(res.status, 200)
+  assert.equal(JSON.parse(calls[0].init.body).params.width, 576)
+  assert.equal(JSON.parse(calls[0].init.body).params.height, 576)
 })
 test("invalid inputs are rejected before upstream fetch", async () => {
   let calls = 0
@@ -117,6 +143,8 @@ test("image+text multipart edits become AI Horde img2img jobs", async () => {
   assert.equal(sent.params.denoising_strength, 0.55)
   assert.equal(sent.source_image, Buffer.from("fakepng").toString("base64"))
   assert.equal(sent.nsfw, true)
+  assert.equal(sent.params.width, 576)
+  assert.equal(sent.params.height, 576)
 })
 test("JSON image+mask edits become inpainting jobs", async () => {
   const { fetchImpl, calls } = fake({
