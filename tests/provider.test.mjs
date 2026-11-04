@@ -98,8 +98,48 @@ test("invalid inputs are rejected before upstream fetch", async () => {
   }
   assert.equal(calls, 0)
 })
-test("does not expose chat or unsupported image edits", async () => {
-  assert.equal((await providerFetch(`${API_ROOT}/images/edits`)).status, 400)
+test("image+text multipart edits become AI Horde img2img jobs", async () => {
+  const { fetchImpl, calls } = fake({
+    "POST /api/v2/generate/async": ok({ id: ID }),
+    ["GET /api/v2/generate/check/" + ID]: ok({ done: true }),
+    ["GET /api/v2/generate/status/" + ID]: ok({ generations: [{ img: IMAGE }] }),
+  })
+  const form = new FormData()
+  form.set("prompt", "red costume")
+  form.set("model", encodeModelName("Pony Diffusion XL"))
+  form.set("image", new File([Buffer.from("fakepng")], "reference.png", { type: "image/png" }))
+  form.set("denoising_strength", "0.55")
+  const response = await providerFetch(`${API_ROOT}/images/edits`, { method: "POST", body: form }, { fetchImpl, nsfw: true })
+  assert.equal(response.status, 200)
+  assert.deepEqual((await response.json()).data, [{ url: IMAGE }])
+  const sent = JSON.parse(calls[0].init.body)
+  assert.equal(sent.source_processing, "img2img")
+  assert.equal(sent.params.denoising_strength, 0.55)
+  assert.equal(sent.source_image, Buffer.from("fakepng").toString("base64"))
+  assert.equal(sent.nsfw, true)
+})
+test("JSON image+mask edits become inpainting jobs", async () => {
+  const { fetchImpl, calls } = fake({
+    "POST /api/v2/generate/async": ok({ id: ID }),
+    ["GET /api/v2/generate/check/" + ID]: ok({ done: true }),
+    ["GET /api/v2/generate/status/" + ID]: ok({ generations: [{ img: IMAGE }] }),
+  })
+  const response = await providerFetch(`${API_ROOT}/images/edits`, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({prompt:"redraw outfit",image:"https://example.org/source.png",mask:"data:image/png;base64,YWJj"}),
+  }, { fetchImpl })
+  assert.equal(response.status, 200)
+  const sent = JSON.parse(calls[0].init.body)
+  assert.equal(sent.source_image, "https://example.org/source.png")
+  assert.equal(sent.source_mask, "YWJj")
+  assert.equal(sent.source_processing, "inpainting")
+})
+test("rejects missing image and unsupported chat requests", async () => {
+  const result = await providerFetch(`${API_ROOT}/images/edits`, {
+    method: "POST", headers: {"content-type":"application/json"},
+    body: JSON.stringify({ prompt: "a" }),
+  })
+  assert.equal(result.status, 400)
   assert.equal((await providerFetch(`${API_ROOT}/chat/completions`)).status, 404)
 })
 test("API failures surface instead of claiming success", async () => {
