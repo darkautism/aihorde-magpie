@@ -29,36 +29,38 @@ test("is a provider only, signs in anonymously without asking for a key", async 
   assert.equal(config.provider.aihorde.npm, "@ai-sdk/openai-compatible")
   assert.ok(config.provider.aihorde.models[DEFAULT_MODEL])
 })
-test("model IDs round-trip and match Magpie images-API keyword", () => {
-  const model = "Pony Diffusion XL 🐴"
-  const encoded = encodeModelName(model)
-  assert.match(encoded, /stable-diffusion/)
-  assert.equal(decodeModelName(encoded), model)
+test("model IDs are stable and display names are separate", () => {
+  const name = "Pony Diffusion XL 🐴"
+  const encoded = encodeModelName(name)
+  assert.equal(encoded, "stable-diffusion-horde--Pony-Diffusion-XL-%F0%9F%90%B4")
+  assert.equal(decodeModelName(encoded), name)
   assert.equal(decodeModelName(DEFAULT_MODEL), null)
-  assert.throws(() => decodeModelName("../broken"))
-  assert.equal(encoded, "Pony-Diffusion-XL-%F0%9F%90%B4--stable-diffusion")
-  assert.ok(!encoded.startsWith("stable-diffusion-horde--"), "display name should come first")
-  assert.equal(decodeModelName("stable-diffusion-horde--Pony-Diffusion-XL-%F0%9F%90%B4"), model)
-  assert.equal(decodeModelName("stable-diffusion-horde--Nova-Flat-XL"), "Nova Flat XL")
+  assert.equal(decodeModelName("Pony-Diffusion-XL-%F0%9F%90%B4--stable-diffusion"), name)
   assert.equal(decodeModelName("stable-diffusion-horde-UG9ueSBEaWZmdXNpb24gWEw"), "Pony Diffusion XL")
   assert.equal(decodeModelName(encodeModelName("SDXL: Pony/Illustrious-v1.0_test")), "SDXL: Pony/Illustrious-v1.0_test")
   assert.equal(decodeModelName(encodeModelName("Foo-Bar")), "Foo-Bar")
   assert.notEqual(encodeModelName("Foo Bar"), encodeModelName("Foo-Bar"))
   assert.throws(() => decodeModelName("stable-diffusion-horde--invalid%ZZ"), /Malformed/)
 })
-test("active models are listed with real worker names plus fallback", () => {
-  const items = modelsFromWorkers([{ name: "A", count: 4 }, { name: "B", count: 0 }, { name: "C", count: 1 }])
-  assert.deepEqual(Object.keys(items), [DEFAULT_MODEL, encodeModelName("A"), encodeModelName("C")])
-  assert.match(items[encodeModelName("A")].name, /4 workers/)
+test("active models are all listed with clean names, no 12-model cap", () => {
+  const workers = Array.from({ length: 30 }, (_, i) => ({ name: "Model "+i, count: 31-i }))
+  workers.push({ name: "Pony Diffusion XL", count: 2 })
+  const models = modelsFromWorkers(workers, [])
+  assert.equal(Object.keys(models).length, 32)
+  assert.deepEqual(Object.keys(models).slice(0,3), [DEFAULT_MODEL, encodeModelName("Pony Diffusion XL"), encodeModelName("Model 0")])
+  assert.equal(models[encodeModelName("Pony Diffusion XL")].name, "Pony Diffusion XL")
+  assert.equal(models[encodeModelName("Model 0")].name, "Model 0")
   assert.deepEqual(Object.keys(modelsFromWorkers(null)), [DEFAULT_MODEL])
 })
-test("anime checkpoints are featured, limited, and sorted by online worker count", () => {
-  const workers = Array.from({ length: 15 }, (_, i) => ({ name: "Generic Model " + i, count: 30 - i }))
-  workers.push({ name: "Pony Diffusion XL", count: 2 }, { name: "Illustrious XL", count: 1 })
-  const models = modelsFromWorkers(workers)
-  assert.equal(Object.keys(models).length, 13) // Automatic plus 12 named models
-  assert.deepEqual(Object.keys(models).slice(1, 3), [encodeModelName("Pony Diffusion XL"), encodeModelName("Illustrious XL")])
-  assert.match(models[encodeModelName("Pony Diffusion XL")].name, /2 workers/)
+test("HolyMix ILXL and every registered offline model remain discoverable", () => {
+  const online = [{ name: "Nova Flat XL", count: 2 }]
+  const models = modelsFromWorkers(online)
+  assert.equal(models[encodeModelName("Nova Flat XL")].name, "Nova Flat XL")
+  assert.ok(models[encodeModelName("HolyMix ILXL")], "HolyMix ILXL is present in the official registry")
+  assert.match(models[encodeModelName("HolyMix ILXL")].name, /offline.*0 workers/)
+  assert.ok(Object.keys(models).length > 100)
+  // Online checkpoints that also appear in the catalog are not duplicated.
+  assert.equal(Object.keys(models).filter(id => id === encodeModelName("Nova Flat XL")).length, 1)
 })
 test("provider fetch translates NSFW requests and returns OpenAI image URL", async () => {
   const { fetchImpl, calls } = fake({
