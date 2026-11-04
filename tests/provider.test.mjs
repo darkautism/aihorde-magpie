@@ -90,7 +90,7 @@ test("automatic default leaves model selection to AI Horde", async () => {
   assert.equal(sent.nsfw, false)
   assert.deepEqual([sent.params.width, sent.params.height], [576, 576])
 })
-test("anonymous image generations override even an explicit larger Magpie size to 576x576", async () => {
+test("anonymous generation preserves a caller-specified image size", async () => {
   const { fetchImpl, calls } = fake({
     "POST /api/v2/generate/async": ok({ id: ID }),
     ["GET /api/v2/generate/check/" + ID]: ok({ done: true }),
@@ -100,7 +100,7 @@ test("anonymous image generations override even an explicit larger Magpie size t
     method: "POST", body: JSON.stringify({ prompt: "portrait", size: "1024x1024" }),
   }, { fetchImpl, key: "0000000000" })
   assert.equal(res.status, 200)
-  assert.deepEqual(JSON.parse(calls[0].init.body).params, {width:576, height:576, n:1, steps:25})
+  assert.deepEqual(JSON.parse(calls[0].init.body).params, {width:1024, height:1024, n:1, steps:25})
 })
 test("personal API key keeps explicit resolution and defaults to 576x576", async () => {
   const { fetchImpl, calls } = fake({
@@ -135,6 +135,7 @@ test("image+text multipart edits become AI Horde img2img jobs", async () => {
   form.set("model", encodeModelName("Pony Diffusion XL"))
   form.set("image", new File([Buffer.from("fakepng")], "reference.png", { type: "image/png" }))
   form.set("denoising_strength", "0.55")
+  form.set("size", "448x576")
   const response = await providerFetch(`${API_ROOT}/images/edits`, { method: "POST", body: form }, { fetchImpl, nsfw: true })
   assert.equal(response.status, 200)
   assert.deepEqual((await response.json()).data, [{ url: IMAGE }])
@@ -143,7 +144,7 @@ test("image+text multipart edits become AI Horde img2img jobs", async () => {
   assert.equal(sent.params.denoising_strength, 0.55)
   assert.equal(sent.source_image, Buffer.from("fakepng").toString("base64"))
   assert.equal(sent.nsfw, true)
-  assert.equal(sent.params.width, 576)
+  assert.equal(sent.params.width, 448)
   assert.equal(sent.params.height, 576)
 })
 test("JSON image+mask edits become inpainting jobs", async () => {
