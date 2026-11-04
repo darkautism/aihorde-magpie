@@ -1,21 +1,22 @@
 {
   "name": "magpie-ai-horde-provider",
-  "version": "0.3.3",
-  "description": "AI Horde Magpie image Provider with readable checkpoint-first IDs, img2img and inpainting",
+  "version": "0.3.4",
+  "description": "AI Horde Magpie Provider: full model registry, clean display names, stable image IDs and img2img",
   "type": "module",
   "main": "./index.mjs",
   "files": [
     "index.mjs",
     "lib/provider.mjs",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "lib/model-catalog.mjs"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check index.mjs && node --check lib/provider.mjs && npm test"
+    "check": "node --check index.mjs && node --check lib/model-catalog.mjs && node --check lib/provider.mjs && npm test"
   },
   "keywords": [
     "magpie",
