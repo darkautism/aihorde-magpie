@@ -1,0 +1,44 @@
+{
+  "name": "magpie-tools-ai-horde",
+  "version": "0.1.0",
+  "description": "AI Horde image generation tools for Magpie agents: submit, poll, preview and cancel jobs",
+  "type": "module",
+  "main": "./index.mjs",
+  "files": [
+    "index.mjs",
+    "lib",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check index.mjs && node --check lib/horde.mjs && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "magpie",
+    "magpie-tools",
+    "opencode-plugin",
+    "mcp",
+    "ai-horde",
+    "image-generation",
+    "nsfw"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/darkautism/aihorde-magpie.git"
+  },
+  "magpie": {
+    "name": "AI Horde Image Tools",
+    "summary": {
+      "en": "Generate images with community GPUs via AI Horde, with asynchronous status tracking and optional adult-content routing.",
+      "zh": "透過 AI Horde 社群 GPU 生圖，支援非同步進度查詢及成人內容工作節點。"
+    },
+    "options": {
+      "nsfwDefault": true
+    }
+  }
+}
