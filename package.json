@@ -1,7 +1,7 @@
 {
   "name": "magpie-ai-horde-provider",
-  "version": "0.2.1",
-  "description": "AI Horde free image provider for Magpie with readable checkpoint names",
+  "version": "0.3.0",
+  "description": "AI Horde native image Provider with text-to-image, img2img and inpainting support",
   "type": "module",
   "main": "./index.mjs",
   "files": [
