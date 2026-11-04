@@ -10,7 +10,7 @@ If you installed the previous v0.1.0 tools version, **remove it** from **Plugins
 magpie plugin add github:darkautism/aihorde-magpie
 ```
 
-Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.3.0) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
+Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.3.1) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
 
 In Magpie's **Providers / External** area, find **AI Horde (image generation)** and sign in:
 - **Use anonymously (free / low priority)** — one click, no API key.
@@ -52,6 +52,13 @@ The native image Provider now supports `POST /v1/images/edits` in addition to `/
 
 Example: POST to Magpie's `/v1/images/edits` with `model=aihorde/stable-diffusion-horde`, `prompt`, and a multipart image file.
 Source images go to volunteer AI Horde workers; never submit sensitive personal photos.
+
+## Default image size (v0.3.1)
+
+- **Anonymous key (`0000000000`): always sends 576×576 to AI Horde**, even if Magpie provides a larger size. This is an intentionally conservative plugin preset, **not an official AI Horde free-resolution limit**.
+- **Personal API key:** defaults to 576×576 when no size or `auto` is specified, but respects an explicitly requested valid size.
+- The same rule applies to text-to-image and image+text editing (`/images/edits`).
+- Current accepted explicit sizes must have dimensions in 64-pixel increments from 256 through 1024. The worker may impose other restrictions.
 
 ## NSFW setting
 
