@@ -10,7 +10,7 @@ If you installed the previous v0.1.0 tools version, **remove it** from **Plugins
 magpie plugin add github:darkautism/aihorde-magpie
 ```
 
-Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.3.4) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
+Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.3.5) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
 
 In Magpie's **Providers / External** area, find **AI Horde (image generation)** and sign in:
 - **Use anonymously (free / low priority)** — one click, no API key.
@@ -32,7 +32,7 @@ Magpie sends the plugin an OpenAI-style POST to `images/generations`, and the pl
 3. Retrieves `generate/status/{id}` after completion.
 4. Returns `{"created": ..., "data": [{"url": "https://..."}]}` to Magpie.
 
-The default model lets AI Horde choose a compatible worker. The image picker now includes **all models with online workers** (no artificial 12-model cap) and the **official 163-name registered model catalog**, including **HolyMix ILXL**. Models with no active workers are clearly labeled `(offline · 0 workers)` and cannot generate images until a worker becomes available. The catalog is a snapshot of the official Haidra-Org image-model reference; online counts are refreshed from Horde at plugin model discovery time.
+The default model lets AI Horde choose a compatible worker. The image picker now includes **all models with online workers** (no artificial 12-model cap) and the **official 163-name registered model catalog**, including **HolyMix ILXL**. Models with no active workers are clearly labeled `(offline · 0 workers)` and cannot generate images until a worker becomes available. The catalog is a snapshot of the official Haidra-Org image-model reference; online counts are refreshed from Horde at plugin model discovery time. When AI Horde's worker-status API fails, registered models remain visible as `(availability unknown)` instead of disappearing from the picker; this does not claim any worker is available.
 
 **Stable IDs, clean labels:** The plugin preserves the `stable-diffusion-horde--` technical prefix in model IDs for Magpie image routing, but puts the actual checkpoint name in the separate `name` display field, e.g. `HolyMix ILXL` rather than the encoded ID. Previous `--stable-diffusion` suffix IDs (v0.3.3) and original Base64 IDs (v0.2.0) are still accepted. Interfaces that deliberately show raw IDs instead of model names may still show the prefix; a Provider plugin cannot change that upstream UI.
 
