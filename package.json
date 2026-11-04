@@ -1,7 +1,7 @@
 {
   "name": "magpie-ai-horde-provider",
-  "version": "0.3.2",
-  "description": "AI Horde image Provider with caller-controlled sizes, text-to-image and image editing",
+  "version": "0.3.3",
+  "description": "AI Horde Magpie image Provider with readable checkpoint-first IDs, img2img and inpainting",
   "type": "module",
   "main": "./index.mjs",
   "files": [
