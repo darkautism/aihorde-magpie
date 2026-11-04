@@ -10,7 +10,7 @@ If you installed the previous v0.1.0 tools version, **remove it** from **Plugins
 magpie plugin add github:darkautism/aihorde-magpie
 ```
 
-Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.2.1) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
+Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.3.0) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
 
 In Magpie's **Providers / External** area, find **AI Horde (image generation)** and sign in:
 - **Use anonymously (free / low priority)** — one click, no API key.
@@ -36,7 +36,22 @@ The default model allows AI Horde to choose a compatible worker. The image picke
 
 **Upgrading from v0.2.0:** previously selected Base64 model IDs are still accepted for image generation, but new model listings use the readable IDs. Remove and reinstall the plugin if Magpie retains the old cached list; then reselect the desired image model.
 
-**Important limitation:** A normal image Provider request is synchronous, while AI Horde is a queue. This plugin waits up to **115 seconds**, after which it returns an error containing the queued job ID. Magpie or a calling agent can also time out earlier; the operation is not guaranteed to complete. Anonymous free queues can be slow, so choosing a model with more active workers or using a personal API key may help. This plugin does not provide polling tools or image edits.
+**Important limitation:** A normal image Provider request is synchronous, while AI Horde is a queue. This plugin waits up to **115 seconds**, after which it returns an error containing the queued job ID. Magpie or a calling agent can also time out earlier; the operation is not guaranteed to complete. Anonymous free queues can be slow, so choosing a model with more active workers or using a personal API key may help. This plugin does not provide polling tools; image editing is supported through the native /images/edits endpoint.
+
+## Image + text image generation (v0.3.0)
+
+The native image Provider now supports `POST /v1/images/edits` in addition to `/v1/images/generations`. No additional MCP tools are required.
+
+- One source image + prompt: AI Horde `source_image` with `source_processing: img2img`.
+- Image + mask + prompt: defaults to `inpainting`.
+- Accepts multipart form-data uploads and JSON with source image URLs or base64 image data.
+- Optional `denoising_strength` between 0.01 and 1 (default 0.75).
+- Supported source modes: `img2img`, `inpainting`, `outpainting`, `remix`. Worker/model availability varies.
+- One source image and optionally one mask are supported; multiple reference images are not yet supported.
+- Image size: dimensions from 256 to 1024 in multiples of 64; prompt maximum: 4000 characters.
+
+Example: POST to Magpie's `/v1/images/edits` with `model=aihorde/stable-diffusion-horde`, `prompt`, and a multipart image file.
+Source images go to volunteer AI Horde workers; never submit sensitive personal photos.
 
 ## NSFW setting
 
