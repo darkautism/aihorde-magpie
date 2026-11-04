@@ -10,7 +10,7 @@ If you installed the previous v0.1.0 tools version, **remove it** from **Plugins
 magpie plugin add github:darkautism/aihorde-magpie
 ```
 
-Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.3.2) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
+Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.3.3) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
 
 In Magpie's **Providers / External** area, find **AI Horde (image generation)** and sign in:
 - **Use anonymously (free / low priority)** — one click, no API key.
@@ -52,6 +52,15 @@ The native image Provider now supports `POST /v1/images/edits` in addition to `/
 
 Example: POST to Magpie's `/v1/images/edits` with `model=aihorde/stable-diffusion-horde`, `prompt`, and a multipart image file.
 Source images go to volunteer AI Horde workers; never submit sensitive personal photos.
+
+## Model ID display (v0.3.3)
+
+Named checkpoints now start with their own name instead of the repeated `stable-diffusion-horde--` prefix:
+
+- Old: `stable-diffusion-horde--Nova-Flat-XL`
+- New: `Nova-Flat-XL--stable-diffusion`
+
+The `--stable-diffusion` ending is required because Magpie's image gateway detects images API models by ID. The prefix is no longer repeated in front of each checkpoint. Both previous readable and v0.2.0 Base64 IDs remain accepted by the adapter, but newly discovered models use the new ID format. Explicit model IDs in existing client configurations may need to be selected again if Magpie prunes models no longer listed.
 
 ## Default image size (v0.3.2)
 
