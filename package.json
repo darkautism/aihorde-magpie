@@ -1,7 +1,7 @@
 {
   "name": "magpie-ai-horde-provider",
-  "version": "0.3.7",
-  "description": "AI Horde Magpie image Provider with checkpoint verification, full model registry and img2img",
+  "version": "0.4.0",
+  "description": "AI Horde Magpie image and text provider: image checkpoints plus OpenAI-compatible Horde chat models",
   "type": "module",
   "main": "./index.mjs",
   "files": [
@@ -9,14 +9,15 @@
     "lib/provider.mjs",
     "README.md",
     "LICENSE",
-    "lib/model-catalog.mjs"
+    "lib/model-catalog.mjs",
+    "lib/text.mjs"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check index.mjs && node --check lib/model-catalog.mjs && node --check lib/provider.mjs && npm test"
+    "check": "node --check index.mjs && node --check lib/model-catalog.mjs && node --check lib/provider.mjs && node --check lib/text.mjs && npm test"
   },
   "keywords": [
     "magpie",
@@ -24,7 +25,9 @@
     "opencode-plugin",
     "provider",
     "ai-horde",
-    "image-generation"
+    "image-generation",
+    "chat-completions",
+    "text-generation"
   ],
   "license": "MIT",
   "repository": {
@@ -32,10 +35,10 @@
     "url": "git+https://github.com/darkautism/aihorde-magpie.git"
   },
   "magpie": {
-    "name": "AI Horde Image Provider",
+    "name": "AI Horde Image + Text Provider",
     "summary": {
-      "en": "Free community GPU image-generation provider. Magpie image picker integration.",
-      "zh": "免費社群 GPU 生圖 Provider，可在 Magpie 圖片生成設定中選用。"
+      "en": "Free community GPU image and chat text models in Magpie, via native image and OpenAI-compatible chat APIs.",
+      "zh": "AI Horde 免費社群影像和文字模型 Provider，支援原生圖片生成及 OpenAI 相容聊天。"
     },
     "maxConcurrency": 1
   }
