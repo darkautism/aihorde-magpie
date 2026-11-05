@@ -10,7 +10,7 @@ If you installed the previous v0.1.0 tools version, **remove it** from **Plugins
 magpie plugin add github:darkautism/aihorde-magpie
 ```
 
-Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.3.5) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
+Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.3.6) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
 
 In Magpie's **Providers / External** area, find **AI Horde (image generation)** and sign in:
 - **Use anonymously (free / low priority)** — one click, no API key.
@@ -61,6 +61,12 @@ Model IDs remain technical and stable, for example `stable-diffusion-horde--Holy
 The Provider supplies a separate `name` field, for example `HolyMix ILXL` (or `HolyMix ILXL (offline · 0 workers)` when unavailable). Magpie's normal model-name UI reads `name`; the `stable-diffusion` ID marker is needed by Magpie's image routing.
 
 Offline catalog models are listed for discovery, not a promise that AI Horde can run them. Only worker availability determines whether an image request can be executed.
+## Actual checkpoint verification (v0.3.6)
+
+For a named checkpoint such as `HolyMix ILXL`, the adapter sends the exact `models: ["HolyMix ILXL"]` parameter to AI Horde. After generation, if the upstream `/generate/status/{id}` response contains a different `generations[].model`, the adapter returns a 502 error with the requested name, actual model, worker name (if reported), and job ID instead of silently accepting an incorrect checkpoint.
+
+Automatic model selection remains unrestricted. Older workers/responses that omit `generations[].model` cannot be verified, so the adapter does not invent a model mismatch when the metadata is missing. This protection verifies the returned checkpoint; it does not change AI Horde scheduling or make offline models available.
+
 ## Default image size (v0.3.2)
 
 - **All accounts, including anonymous:** when no size or `auto` is specified, defaults to **576×576**.
