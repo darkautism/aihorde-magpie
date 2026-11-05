@@ -1,6 +1,6 @@
-# AI Horde image provider for Magpie
+# AI Horde image + text provider for Magpie
 
-Native **Provider** integration for Magpie. The image models appear in **Providers** and **Settings → Images → Image generation**, not in Tool plugins. An OpenAI-compatible `/v1/images/generations` request is translated into AI Horde's async image-generation queue, and the plugin returns the resulting picture URL to Magpie. No Python bridge, separate server, Docker or external dependency is needed.
+Native **Provider** integration for Magpie, supporting both image checkpoints and chat/text models from the free AI Horde network. Image checkpoints appear in **Settings → Images → Image generation**; text models appear in the regular chat model picker. Image requests use Horde's image queue; chat requests use the official OpenAI-compatible front at `https://oai.aihorde.net/v1`. No Python bridge, separate server, Docker or extra npm dependency is needed.
 
 ## Install or upgrade
 
@@ -10,19 +10,41 @@ If you installed the previous v0.1.0 tools version, **remove it** from **Plugins
 magpie plugin add github:darkautism/aihorde-magpie
 ```
 
-Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image Provider** (v0.3.7) and list **AI Horde (image generation)** as the provider. It should **not** list `generate_image` or other MCP tools.
+Or use **Plugins → Add plugin** and paste `github:darkautism/aihorde-magpie`. The plugin should now say **AI Horde Image + Text Provider** (v0.4.0) and list **AI Horde (images + text)** as the provider. It should **not** list `generate_image` or other MCP tools.
 
 In Magpie's **Providers / External** area, find **AI Horde (image generation)** and sign in:
 - **Use anonymously (free / low priority)** — one click, no API key.
 - **AI Horde personal API key** — paste your key to improve queue priority.
 
-Then open **Settings → Images → Image generation**, select the `aihorde` image model **Automatic** or a named active image model. Example model ID: `aihorde/stable-diffusion-horde`. The plugin uses Magpie's existing built-in image generation UI and gateway; it does not add a new chat LLM.
+Then open **Settings → Images → Image generation** for image checkpoints (e.g. `aihorde/stable-diffusion-horde`), or the **regular chat model picker** for AI Horde text models (e.g. `aihorde/horde-text--koboldcpp%2FQwen3%2D4B`, when offered by a worker). The latter example is an ID format, not a promise that the model is currently online. Models are refreshed from the official Horde API when Magpie discovers the provider.
 
 To test through Magpie CLI (if your version supports it):
 
 ```bash
 magpie tool generate_image "an anime castle at night" --model aihorde/stable-diffusion-horde --size 512x512 -o image.png
 ```
+
+## Text / chat models (v0.4.0)
+
+- **Same AI Horde account:** the existing anonymous login (`0000000000`) or personal API key serves both images and chat. There is no separate signup.
+- **Dynamic discovery:** the plugin queries the official `GET https://oai.aihorde.net/v1/models`, then displays those chat models in Magpie as text-only models. It does not show invented offline text entries if the API is down.
+- **Chat requests:** Magpie's OpenAI-compatible `/chat/completions` request is forwarded to `POST https://oai.aihorde.net/v1/chat/completions`. The underlying Horde model name is restored from the plugin's stable text model ID, preserving messages, system instructions, sampling options and OpenAI JSON responses.
+- **Streaming:** a `stream: true` request passes through the official front's SSE response unchanged; the plugin does not synthesize or buffer token chunks.
+- **Capabilities:** tools, multimodal inputs and structured outputs depend on the individual online Horde chat workers. Models are conservatively advertised as text-only without guaranteed tool calling. Worker model selection and queue times change, and requests may be refused.
+- **Privacy and policy:** prompts are processed by volunteer workers. A model's self-description as 'uncensored' does not override Horde or worker content rules. Do not submit secrets or private player records without consent.
+
+For **Isekai's Image Prompt Binding**, you can either call this provider through Magpie's model gateway, or use the upstream **directly** as an OpenAI-compatible API:
+
+```text
+Base URL: https://oai.aihorde.net/v1
+API key: your AI Horde key (or 0000000000 for anonymous)
+Model: choose an actual id from GET /v1/models
+POST /chat/completions
+```
+
+Magpie's encoded id (e.g. `horde-text--koboldcpp%2FQwen3%2D4B`) is **only for the Magpie provider**. When calling the official front directly, use its original model id (e.g. `koboldcpp/Qwen3-4B`), not the encoded id.
+
+The official OpenAI-compatible front is documented at <https://oai.aihorde.net/docs>. As with images, availability and latency depend on volunteer worker capacity.
 
 ## How this works
 
@@ -101,7 +123,7 @@ The provider option **Enable NSFW generation** is enabled by default. It sets `n
 - AI Horde decides which workers accept each prompt. `nsfw: true` is an opt-in routing hint, not a moderation bypass.
 - The plugin requests `r2: true` and `shared: false`; anonymous requests may still have different sharing/privacy rules under AI Horde's own policies.
 - It returns temporary HTTPS image URLs. Download or save generated images promptly.
-- There is no guaranteed processing time, uptime, or free quota. Anonymous use has low priority.
+- There is no guaranteed processing time, uptime, or free quota. Anonymous use has low priority. The text API is independently hosted from the image API, so one can work while the other is unavailable.
 
 ## Development
 
@@ -109,8 +131,9 @@ The provider option **Enable NSFW generation** is enabled by default. It sets `n
 npm test
 ```
 
-Unit tests use mocked AI Horde responses only. The plugin has **not** been end-to-end tested with a live Magpie installation or real AI Horde workers. Please report failures with your Magpie version and redacted logs.
+Unit tests use mocked AI Horde responses only, including native chat SSE. The plugin has **not** been end-to-end tested with a live Magpie installation or real AI Horde workers. Please report failures with your Magpie version and redacted logs.
 
+AI Horde official OpenAI-compatible chat front: https://oai.aihorde.net/docs  
 Magpie API docs: https://usemagpie.ai/docs/plugins  
 Magpie provider image integration: https://github.com/yetone/magpie/blob/main/docs/subsystems/provider-plugins.md  
 AI Horde API docs: https://aihorde.net/api/
