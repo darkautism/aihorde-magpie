@@ -83,6 +83,36 @@ test("provider fetch translates NSFW requests and returns OpenAI image URL", asy
   assert.equal(submission.params.width, 768)
   assert.equal(submission.params.height, 512)
 })
+test("named HolyMix requests cannot silently return a different Horde checkpoint", async () => {
+  const { fetchImpl, calls } = fake({
+    "POST /api/v2/generate/async": ok({ id: ID }),
+    ["GET /api/v2/generate/check/" + ID]: ok({ done: true }),
+    ["GET /api/v2/generate/status/" + ID]: ok({ generations: [{ img: IMAGE, model: "stable_diffusion", worker_name: "worker-x" }] }),
+  })
+  const res = await providerFetch(`${API_ROOT}/images/generations`, {
+    method: "POST", body: JSON.stringify({ prompt: "anime palace", model: encodeModelName("HolyMix ILXL") }),
+  }, { fetchImpl })
+  const submission = JSON.parse(calls[0].init.body)
+  assert.deepEqual(submission.models, ["HolyMix ILXL"])
+  assert.equal(res.status, 502)
+  const body = await res.json()
+  assert.match(body.error.message, /requested "HolyMix ILXL"/)
+  assert.match(body.error.message, /generated "stable_diffusion"/)
+  assert.match(body.error.message, /worker-x/)
+  assert.match(body.error.message, new RegExp(ID))
+})
+test("named HolyMix requests accept matching Horde model metadata", async () => {
+  const { fetchImpl } = fake({
+    "POST /api/v2/generate/async": ok({ id: ID }),
+    ["GET /api/v2/generate/check/" + ID]: ok({ done: true }),
+    ["GET /api/v2/generate/status/" + ID]: ok({ generations: [{ img: IMAGE, model: "HolyMix ILXL", worker_name: "worker-y" }] }),
+  })
+  const res = await providerFetch(`${API_ROOT}/images/generations`, {
+    method: "POST", body: JSON.stringify({ prompt: "anime palace", model: encodeModelName("HolyMix ILXL") }),
+  }, { fetchImpl })
+  assert.equal(res.status, 200)
+  assert.deepEqual((await res.json()).data, [{ url: IMAGE }])
+})
 test("automatic default leaves model selection to AI Horde", async () => {
   const { fetchImpl, calls } = fake({
     "POST /api/v2/generate/async": ok({ id: ID }),
