@@ -1,12 +1,14 @@
 import { PROVIDER_ID, API_ROOT, ANONYMOUS_KEY, defaultModels, providerFetch, listWorkerModels } from "./lib/provider.mjs"
+import { listTextModels } from "./lib/text.mjs"
 
-// Provider plugin, not tool plugin. Magpie registers its image models under Settings > Images.
+// Provider plugin, not tool plugin. Image checkpoints appear in Settings > Images;
+// chat-capable Horde text models appear in the regular model picker.
 export async function AIHordeProvider(input) {
   return {
     config: async (cfg) => {
       cfg.provider ??= {}
       cfg.provider[PROVIDER_ID] ??= {
-        name: "AI Horde (image generation)",
+        name: "AI Horde (images + text)",
         npm: "@ai-sdk/openai-compatible",
         api: API_ROOT,
         models: defaultModels(),
@@ -43,10 +45,16 @@ export async function AIHordeProvider(input) {
     provider: {
       id: PROVIDER_ID,
       async models(provider, { auth } = {}) {
-        // Include a deterministic default so the image picker works when Horde's worker API is down.
-        const discovered = await listWorkerModels({ key: auth?.type === "api" ? auth.key : ANONYMOUS_KEY })
+        const key = auth?.type === "api" && auth.key ? auth.key : ANONYMOUS_KEY
+        // Image discovery and chat discovery are independent. A failed or slow
+        // text model list must not remove the image checkpoints (and vice versa).
+        const [images, text] = await Promise.all([
+          listWorkerModels({ key }),
+          listTextModels({ key, clientAgent: "aihorde-magpie:0.4.0:https://github.com/darkautism/aihorde-magpie" }),
+        ])
         const base = provider?.models?.["stable-diffusion-horde"] ?? defaultModels()["stable-diffusion-horde"]
-        return Object.fromEntries(Object.entries(discovered).map(([id, model]) => [id, { ...base, ...model }]))
+        const imageModels = Object.fromEntries(Object.entries(images).map(([id, model]) => [id, { ...base, ...model }]))
+        return { ...imageModels, ...text }
       },
     },
   }
