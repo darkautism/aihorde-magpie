@@ -4,6 +4,7 @@ import { AIHordeProvider } from "../index.mjs"
 import { DEFAULT_MODEL, API_ROOT, encodeModelName, decodeModelName, modelsFromWorkers, providerFetch, listWorkerModels } from "../lib/provider.mjs"
 const ID = "11111111-2222-4333-8444-555555555555"
 const IMAGE = "https://cdn.example.test/image.webp"
+const SAMPLING = { steps: 30, cfg_scale: 5, sampler_name: "k_euler_a", scheduler: "karras", clip_skip: 2, tiling: false }
 const ok = (data, status = 200) => new Response(JSON.stringify(data), { status })
 function fake(routes) {
   const calls = []
@@ -82,6 +83,8 @@ test("provider fetch translates NSFW requests and returns OpenAI image URL", asy
   assert.equal(submission.params.n, 2)
   assert.equal(submission.params.width, 768)
   assert.equal(submission.params.height, 512)
+  for (const [name, value] of Object.entries(SAMPLING)) assert.equal(submission.params[name], value)
+  assert.equal("seed" in submission.params, false, "Unspecified seed stays random")
 })
 test("named HolyMix requests cannot silently return a different Horde checkpoint", async () => {
   const { fetchImpl, calls } = fake({
@@ -136,7 +139,7 @@ test("anonymous generation preserves a caller-specified image size", async () =>
     method: "POST", body: JSON.stringify({ prompt: "portrait", size: "1024x1024" }),
   }, { fetchImpl, key: "0000000000" })
   assert.equal(res.status, 200)
-  assert.deepEqual(JSON.parse(calls[0].init.body).params, {width:1024, height:1024, n:1, steps:25})
+  assert.deepEqual(JSON.parse(calls[0].init.body).params, { width: 1024, height: 1024, n: 1, ...SAMPLING })
 })
 test("personal API key keeps explicit resolution and defaults to 576x576", async () => {
   const { fetchImpl, calls } = fake({
@@ -182,6 +185,7 @@ test("image+text multipart edits become AI Horde img2img jobs", async () => {
   assert.equal(sent.nsfw, true)
   assert.equal(sent.params.width, 448)
   assert.equal(sent.params.height, 576)
+  for (const [name, value] of Object.entries(SAMPLING)) assert.equal(sent.params[name], value)
 })
 test("JSON image+mask edits become inpainting jobs", async () => {
   const { fetchImpl, calls } = fake({
