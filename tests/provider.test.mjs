@@ -209,7 +209,8 @@ test("rejects missing image and unsupported chat requests", async () => {
     body: JSON.stringify({ prompt: "a" }),
   })
   assert.equal(result.status, 400)
-  assert.equal((await providerFetch(`${API_ROOT}/chat/completions`)).status, 404)
+  assert.equal((await providerFetch(`${API_ROOT}/chat/completions`)).status, 400)
+  assert.equal((await providerFetch(`${API_ROOT}/unknown`)).status, 404)
 })
 test("API failures surface instead of claiming success", async () => {
   const { fetchImpl } = fake({ "POST /api/v2/generate/async": ok({ message: "No matching workers" }, 400) })
