@@ -1,4 +1,4 @@
-import { PROVIDER_ID, API_ROOT, ANONYMOUS_KEY, defaultModels, providerFetch, listWorkerModels } from "./lib/provider.mjs"
+import { PROVIDER_ID, API_ROOT, CLIENT_AGENT, ANONYMOUS_KEY, defaultModels, providerFetch, listWorkerModels } from "./lib/provider.mjs"
 import { listTextModels } from "./lib/text.mjs"
 
 // Provider plugin, not tool plugin. Image checkpoints appear in Settings > Images;
@@ -50,7 +50,7 @@ export async function AIHordeProvider(input) {
         // text model list must not remove the image checkpoints (and vice versa).
         const [images, text] = await Promise.all([
           listWorkerModels({ key }),
-          listTextModels({ key, clientAgent: "aihorde-magpie:0.4.0:https://github.com/darkautism/aihorde-magpie" }),
+          listTextModels({ key, clientAgent: CLIENT_AGENT }),
         ])
         const base = provider?.models?.["stable-diffusion-horde"] ?? defaultModels()["stable-diffusion-horde"]
         const imageModels = Object.fromEntries(Object.entries(images).map(([id, model]) => [id, { ...base, ...model }]))
